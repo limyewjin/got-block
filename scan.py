@@ -121,8 +121,6 @@ while True:
                 send_email(proposer_index, block_number, block_mev_reward, block_reward)  # Send email notification
             else:
                 print(f"Proposer index {proposer_index} is not in the validator indices.")
-            
-            # Add your custom logic here
 
         # Update the starting block number
         start_block = last_block_checked
