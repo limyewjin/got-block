@@ -96,6 +96,7 @@ while True:
     # Check if there are new finalized blocks
     if latest_finalized_block > start_block:
         # Retrieve and process the new finalized blocks
+        last_block_checked = start_block
         for block_number in range(start_block + 1, latest_finalized_block + 1):
             # Process the block data as needed
             print(f"New finalized block: {block_number}")
@@ -105,7 +106,11 @@ while True:
             print(f"Beaconcha.in block info: {beaconchain_block_info}")
             
             # Check if the proposer index is in the validator_indices set
-            proposer_index = beaconchain_block_info['data'][0]['posConsensus']['proposerIndex']
+            try:
+              proposer_index = beaconchain_block_info['data'][0]['posConsensus']['proposerIndex']
+            except:
+              break
+            last_block_checked = block_number
             if proposer_index in validator_indices:
                 print(f"Proposer index {proposer_index} is in the validator indices.")
                 
@@ -120,4 +125,4 @@ while True:
             # Add your custom logic here
 
         # Update the starting block number
-        start_block = latest_finalized_block
+        start_block = last_block_checked
