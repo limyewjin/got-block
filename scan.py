@@ -87,40 +87,45 @@ with open('validators.txt', 'r') as file:
     print(f'Loaded {len(validator_indices)} validator indices.')
 
 while True:
-    # Wait for a certain interval before checking for new finalized blocks again
-    time.sleep(30)  # Wait for 30 seconds, adjust as needed
+    try:
+        # Wait for a certain interval before checking for new finalized blocks again
+        time.sleep(30)  # Wait for 30 seconds, adjust as needed
 
-    # Get the latest finalized block number
-    latest_finalized_block = get_latest_finalized_block()
+        # Get the latest finalized block number
+        latest_finalized_block = get_latest_finalized_block()
 
-    # Check if there are new finalized blocks
-    if latest_finalized_block > start_block:
-        # Retrieve and process the new finalized blocks
-        last_block_checked = start_block
-        for block_number in range(start_block + 1, latest_finalized_block + 1):
-            # Process the block data as needed
-            print(f"New finalized block: {block_number}")
+        # Check if there are new finalized blocks
+        if latest_finalized_block > start_block:
+            # Retrieve and process the new finalized blocks
+            last_block_checked = start_block
+            for block_number in range(start_block + 1, latest_finalized_block + 1):
+                # Process the block data as needed
+                print(f"New finalized block: {block_number}")
 
-            # Get additional block info from beaconcha.in
-            beaconchain_block_info = get_beaconchain_block_info(block_number)
-            print(f"Beaconcha.in block info: {beaconchain_block_info}")
-            
-            # Check if the proposer index is in the validator_indices set
-            try:
-              proposer_index = beaconchain_block_info['data'][0]['posConsensus']['proposerIndex']
-            except:
-              break
-            last_block_checked = block_number
-            if proposer_index in validator_indices:
-                print(f"Proposer index {proposer_index} is in the validator indices.")
+                # Get additional block info from beaconcha.in
+                beaconchain_block_info = get_beaconchain_block_info(block_number)
+                print(f"Beaconcha.in block info: {beaconchain_block_info}")
                 
-                # Extract MEV and block reward from beaconcha.in block info
-                block_mev_reward = beaconchain_block_info['data'][0]['blockMevReward'] / 10**18  # Convert to ETH
-                block_reward = beaconchain_block_info['data'][0]['blockReward'] / 10**18  # Convert to ETH
-                
-                send_email(proposer_index, block_number, block_mev_reward, block_reward)  # Send email notification
-            else:
-                print(f"Proposer index {proposer_index} is not in the validator indices.")
+                # Check if the proposer index is in the validator_indices set
+                try:
+                  proposer_index = beaconchain_block_info['data'][0]['posConsensus']['proposerIndex']
+                except:
+                  break
+                last_block_checked = block_number
+                if proposer_index in validator_indices:
+                    print(f"Proposer index {proposer_index} is in the validator indices.")
+                    
+                    # Extract MEV and block reward from beaconcha.in block info
+                    block_mev_reward = beaconchain_block_info['data'][0]['blockMevReward'] / 10**18  # Convert to ETH
+                    block_reward = beaconchain_block_info['data'][0]['blockReward'] / 10**18  # Convert to ETH
+                    
+                    send_email(proposer_index, block_number, block_mev_reward, block_reward)  # Send email notification
+                else:
+                    print(f"Proposer index {proposer_index} is not in the validator indices.")
 
-        # Update the starting block number
-        start_block = last_block_checked
+            # Update the starting block number
+            start_block = last_block_checked
+    except Exception as e:
+        print(f"Error encountered: {e}")
+        print("Retrying in 30 seconds...")
+        continue
