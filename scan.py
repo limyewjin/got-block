@@ -19,7 +19,7 @@ def get_latest_finalized_block():
         data = response.json()
         
         if data['status'] == 'OK':
-            latest_block = max(data['data'], key=lambda block: block['exec_block_number'])
+            latest_block = max(data['data'], key=lambda block: block['exec_block_number'] if block['exec_block_number'] else 0)
             return latest_block['exec_block_number']
         else:
             print(f"Error: {data['status']}")
