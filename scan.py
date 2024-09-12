@@ -14,7 +14,7 @@ def get_latest_finalized_block():
     url = 'https://beaconcha.in/api/v1/epoch/finalized/slots'
     
     try:
-        response = requests.get(url)
+        response = requests.get(url, timeout=60)
         response.raise_for_status()  # Raise an exception for unsuccessful status codes
         data = response.json()
         
@@ -44,7 +44,7 @@ def get_beaconchain_block_info(block_number):
         time.sleep(BEACONCHAIN_THROTTLE_INTERVAL - (current_time - beaconchain_last_request_time))
     url = f"https://beaconcha.in/api/v1/execution/block/{block_number}"
     headers = {"accept": "application/json"}
-    response = requests.get(url, headers=headers)
+    response = requests.get(url, headers=headers, timeout=60)
     beaconchain_last_request_time = time.time()
     return response.json()
 
@@ -98,19 +98,23 @@ while True:
         if latest_finalized_block > start_block:
             # Retrieve and process the new finalized blocks
             last_block_checked = start_block
+            success = False
             for block_number in range(start_block + 1, latest_finalized_block + 1):
                 # Process the block data as needed
                 print(f"New finalized block: {block_number}")
 
-                # Get additional block info from beaconcha.in
-                beaconchain_block_info = get_beaconchain_block_info(block_number)
-                print(f"Beaconcha.in block info: {beaconchain_block_info}")
-                
                 # Check if the proposer index is in the validator_indices set
                 try:
+                  # Get additional block info from beaconcha.in
+                  beaconchain_block_info = get_beaconchain_block_info(block_number)
+                  print(f"Beaconcha.in block info: {beaconchain_block_info}")
+                
                   proposer_index = beaconchain_block_info['data'][0]['posConsensus']['proposerIndex']
-                except:
+                except Exception as e:
+                  print(f"Error exception: {e}")
                   break
+
+                success = True
                 last_block_checked = block_number
                 if proposer_index in validator_indices:
                     print(f"Proposer index {proposer_index} is in the validator indices.")
@@ -123,8 +127,9 @@ while True:
                 else:
                     print(f"Proposer index {proposer_index} is not in the validator indices.")
 
-            # Update the starting block number
-            start_block = last_block_checked
+            if success:
+              # Update the starting block number
+              start_block = last_block_checked
     except Exception as e:
         print(f"Error encountered: {e}")
         print("Retrying in 30 seconds...")
